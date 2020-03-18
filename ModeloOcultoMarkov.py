@@ -6,14 +6,15 @@ from pprint import pprint
 def viterbi(pi, a, b, obs):
 
     # Tamanho da matriz de emissão (oculto-observável)
-    nStates = np.shape(b)[0]
+    num_estados = np.shape(b)[0]
     T = np.shape(obs)[0]
+    print(num_estados)
 
     # Inicia o caminho em branco, do tamanho da sequência de observação.
-    path = np.zeros(T, dtype=int)
+    caminho = np.zeros(T, dtype=int)
 
-    delta = np.zeros((nStates, T))
-    phi = np.zeros((nStates, T))
+    delta = np.zeros((num_estados, T))
+    phi = np.zeros((num_estados, T))
 
     # Inicializa delta e phi.
     delta[:, 0] = pi * b[:, obs[0]]
@@ -23,54 +24,32 @@ def viterbi(pi, a, b, obs):
     print('\nSeguindo...\n')
 
     for t in range(1, T):
-        for s in range(nStates):
+        for s in range(num_estados):
             delta[s, t] = np.max(delta[:, t-1] * a[:, s]) * b[s, obs[t]]
             phi[s, t] = np.argmax(delta[:, t-1] * a[:, s])
-            print('s={s} and t={t}: phi[{s}, {t}] = {phi}'.format(
+            print('s={s}, t={t}: phi[{s}, {t}] = {phi}'.format(
                 s=s, t=t, phi=phi[s, t]))
 
     # Encontra o caminho ótimo.
     print('-'*100)
-    print('Inicia backtracing\n')
-    path[T-1] = np.argmax(delta[:, T-1])
-    #p('init path\n    t={} path[{}-1]={}\n'.format(T-1, T, path[T-1]))
+    print("Backtracking:\n")
+    caminho[T-1] = np.argmax(delta[:, T-1])
     for t in range(T-2, -1, -1):
-        path[t] = phi[path[t+1], [t+1]]
-        #p(' '*4 + 't={t}, path[{t}+1]={path}, [{t}+1]={i}'.format(t=t, path=path[t+1], i=[t+1]))
-        print('caminho[{}] = {}'.format(t, path[t]))
+        caminho[t] = phi[caminho[t+1], [t+1]]
+        print("caminho[{}] = {}".format(t, caminho[t]))
+    print()
 
-    return path, delta, phi
-
-
-def mapa(Q):
-    transicoes = {}
-    for coluna in Q.columns:
-        for linha in Q.index:
-            transicoes[(linha, coluna)] = Q.loc[linha, coluna]
-    return transicoes
-
-
-# Estados = ["Ensolarado", "Chuvoso", "Nublado"]
-# TransicaoInicial = [0.35, 0.35, 0.3]
-
-# espacoEstados = pd.Series(TransicaoInicial, index=Estados, name="Estados")
-# Transicoes = [[0.3, 0.3, 0.4], [0.1, 0.45, 0.45], [0.2, 0.3, 0.5]]
-# espacoTransicoes = pd.DataFrame(columns=Estados, index=Estados)
-# for i, transicao in enumerate(Transicoes):
-#     espacoTransicoes.loc[Estados[i]] = transicao
-# Transicoes = espacoTransicoes.values
-
-# mapaTransicoes = mapa(espacoTransicoes)
-# print(mapaTransicoes)
+    return caminho, delta, phi
 
 ###################
 # Estados ocultos #
 ###################
 
+
 # Estados ocultos
 oculto_estados = ['Quente', 'Frio']
 # Probabilidades iniciais
-pi = [0.5, 0.5]
+pi = [0.3, 0.7]
 # Transições entre estados ocultos
 oculto_transicoes = [[0.7, 0.3], [0.4, 0.6]]
 
@@ -122,7 +101,7 @@ path, delta, phi = viterbi(pi, a, b, obs)
 # print("\n delta: \n", delta)
 # print("\n phi: \n", phi)
 
-estados_mapa = {0: 'Quente', 1: 'Frio'}
+estados_mapa = {0: 'Frio', 1: 'Quente'}
 estados_caminho = [estados_mapa[v] for v in path]
 
 print(pd.DataFrame()
